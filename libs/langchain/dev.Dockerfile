@@ -8,16 +8,15 @@ USER vscode
 
 # Define the version of Poetry to install (default is 1.4.2)
 # Define the directory of python virtual environment
-ARG PYTHON_VIRTUALENV_HOME=/home/vscode/langchain-py-env \
-    POETRY_VERSION=1.3.2
+ENV POETRY_HOME=/home/vscode/langchain-py-env \
+    POETRY_VERSION=1.7.1 
 
 ENV POETRY_VIRTUALENVS_IN_PROJECT=false \
-    POETRY_NO_INTERACTION=true 
+    POETRY_NO_INTERACTION=true \
+    PYTHON_VIRTUALENV_HOME=${POETRY_HOME}/venv
 
 # Create a Python virtual environment for Poetry and install it
-RUN python3 -m venv ${PYTHON_VIRTUALENV_HOME} && \
-    $PYTHON_VIRTUALENV_HOME/bin/pip install --upgrade pip && \
-    $PYTHON_VIRTUALENV_HOME/bin/pip install poetry==${POETRY_VERSION}
+RUN curl -sSL https://install.python-poetry.org | python3 -
 
 ENV PATH="$PYTHON_VIRTUALENV_HOME/bin:$PATH" \
     VIRTUAL_ENV=$PYTHON_VIRTUALENV_HOME
@@ -50,4 +49,5 @@ COPY libs/community/ ../community/
 COPY libs/text-splitters/ ../text-splitters/
 
 # Install the Poetry dependencies (this layer will be cached as long as the dependencies don't change)
-RUN poetry install --no-interaction --no-ansi --with dev,test,docs
+RUN poetry install --no-interaction --without codespell \
+    && pip install rapidfuzz requests_toolbelt
